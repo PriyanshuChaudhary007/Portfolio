@@ -34,7 +34,9 @@ function CopyEmail() {
 
 export function Contact() {
   return (
-    <section id="contact" aria-labelledby="contact-heading" className="scroll-mt-24 py-20 sm:py-28">
+    // `overlap` makes this the last panel in the scroll stack (see index.css);
+    // a panel has to be opaque to cover the one it rides over.
+    <section id="contact" aria-labelledby="contact-heading" className="overlap scroll-mt-24 bg-bg py-20 sm:py-28">
       <div className="mx-auto w-full max-w-6xl px-6 lg:px-8">
         <Reveal direction="scale">
           <div className="relative overflow-hidden rounded-2xl border border-line bg-surface px-6 py-12 sm:px-10 sm:py-14">

@@ -217,6 +217,68 @@
 }
 
 /* ---------------------------------------------------------------------------
+   Overlapping sections on scroll. Every section below the hero is a panel:
+   opaque, rounded at the top, with a soft shadow cast upward, and pulled up
+   over the panel before it so the stack reads as sheets of paper.
+
+   The overlap is a negative margin, so it is real layout — the fallback when
+   scroll-driven animations are missing is simply a static overlap. Where they
+   are supported, each panel enters flush with the section above and climbs the
+   last `--overlap` over it, which is what makes the covering read as motion.
+
+   The overlap stays smaller than a section's bottom padding (py-20 = 5rem,
+   py-28 = 7rem), so panels only ever cover whitespace, never content.
+--------------------------------------------------------------------------- */
+.overlap {
+  --overlap: 2.75rem;
+
+  position: relative; /* paint in DOM order: each panel covers the one before */
+  border-top: 1px solid var(--line);
+  border-top-left-radius: 1.75rem;
+  border-top-right-radius: 1.75rem;
+  box-shadow: 0 -1rem 2.5rem -1rem rgb(28 25 23 / 0.14);
+}
+.dark .overlap {
+  box-shadow: 0 -1rem 2.5rem -1rem rgb(0 0 0 / 0.55);
+}
+@media (min-width: 640px) {
+  .overlap {
+    --overlap: 4.5rem;
+  }
+}
+
+/* The hero is not a panel, so the first one has nothing to ride over. */
+.overlap + .overlap {
+  margin-top: calc(var(--overlap) * -1);
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .overlap + .overlap {
+      animation-name: panel-climb;
+      /* `auto` hands the duration to the timeline. The `animation` shorthand
+         would set it to 0s, which finishes the climb before it starts. */
+      animation-duration: auto;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: view();
+      /* A fixed distance, not a percentage of the range: sections differ in
+         height by 4x and the climb should feel the same on all of them. */
+      animation-range: entry 0% entry 340px;
+    }
+  }
+
+  @keyframes panel-climb {
+    from {
+      transform: translateY(var(--overlap));
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
    Hero gate. Layers, outermost in: a breathing halo, the dark void the art
    sits in, a slow-turning dashed ring, a static rim, the masked artwork, then
    two passes of light over the top.

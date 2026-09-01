@@ -16,12 +16,20 @@ interface SectionProps {
 
 // Shared shell so every section has the same rhythm: a mono index + label
 // kicker, a display heading, an optional intro, then its content.
+//
+// `overlap` enrols the section in the scroll stack (see index.css), which is
+// why the background is always explicit: a panel has to be opaque to cover the
+// one it rides over.
 export function Section({ id, index, eyebrow, title, intro, children, className, alt }: SectionProps) {
   return (
     <section
       id={id}
       aria-labelledby={`${id}-heading`}
-      className={cn('scroll-mt-24 py-20 sm:py-28', alt && 'bg-bg-alt border-y border-line', className)}
+      className={cn(
+        'overlap scroll-mt-24 py-20 sm:py-28',
+        alt ? 'border-y border-line bg-bg-alt' : 'bg-bg',
+        className,
+      )}
     >
       <div className="mx-auto w-full max-w-6xl px-6 lg:px-8">
         <Reveal>
