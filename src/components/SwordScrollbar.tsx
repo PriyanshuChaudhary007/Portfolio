@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 
-// The sword only replaces the native bar where there is a real pointer to grab it
-// with and a gutter wide enough to hold it. The media query in index.css that
-// hides the native scrollbar has to stay in step with this one.
-const QUERY = '(pointer: fine) and (min-width: 1024px)'
+// The sword replaces the native bar where there is a real pointer to grab it with
+// and a gutter wide enough to hold it at full size. Everywhere else — phones,
+// tablets, narrow windows — it still hangs there and still reads the position, but
+// compact and untouchable; that is [data-compact] in index.css. The query there
+// that hides the native scrollbar has to stay in step with this one.
+const INTERACTIVE = '(pointer: fine) and (min-width: 1024px)'
 
 // Where scroll() timelines exist, index.css hangs the sword's position, the
 // trail's fill and the rune charge straight off the document's scroll offset, so
@@ -14,18 +16,19 @@ const CSS_DRIVEN = CSS.supports('animation-timeline', 'scroll(root block)')
 
 // Scroll progress drawn as a sword hanging in the right gutter: the sheath line
 // is the track, the sword is the thumb, and the trail behind it fills as you go
-// down the page. Dragging the sword scrolls; clicking the rail jumps. All of it
-// is decorative duplication of the scrollbar, so it is hidden from the
-// accessibility tree and the page still scrolls by wheel, keys and touch.
+// down the page. Dragging the sword scrolls and clicking the rail jumps, where
+// there is a pointer to do either with. All of it is decorative duplication of the
+// scrollbar, so it is hidden from the accessibility tree and the page still scrolls
+// by wheel, keys and touch.
 export function SwordScrollbar() {
-  const [enabled, setEnabled] = useState(() => window.matchMedia(QUERY).matches)
+  const [interactive, setInteractive] = useState(() => window.matchMedia(INTERACTIVE).matches)
   const railRef = useRef<HTMLDivElement>(null)
   const swordRef = useRef<HTMLDivElement>(null)
   const sheathRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
-    const mq = window.matchMedia(QUERY)
-    const onChange = (event: MediaQueryListEvent) => setEnabled(event.matches)
+    const mq = window.matchMedia(INTERACTIVE)
+    const onChange = (event: MediaQueryListEvent) => setInteractive(event.matches)
     mq.addEventListener('change', onChange)
     return () => mq.removeEventListener('change', onChange)
   }, [])
@@ -34,7 +37,11 @@ export function SwordScrollbar() {
     const rail = railRef.current
     const sword = swordRef.current
     const sheath = sheathRef.current
-    if (!enabled || !rail || !sword || !sheath) return
+    if (!rail || !sword || !sheath) return
+    // Scroll state lives on <html>: the sword and the progress bar across the top
+    // are nowhere near each other in the DOM, and this is the one ancestor both of
+    // them have.
+    const root = document.documentElement
 
     let frame = 0
     let idle = 0
@@ -62,9 +69,11 @@ export function SwordScrollbar() {
       frame = 0
       if (max <= 0 || travel <= 0) return
       const progress = Math.min(1, Math.max(0, window.scrollY / max))
-      rail.classList.toggle('is-drawn', progress > 0.995)
+      root.classList.toggle('is-drawn', progress > 0.995)
       if (CSS_DRIVEN) return
-      rail.style.setProperty('--p', String(progress))
+      // One write for both readouts: --p is inherited, and the CSS falls back to
+      // reading it wherever a scroll() timeline is not available to animate it.
+      root.style.setProperty('--p', String(progress))
       sword.style.transform = `translate3d(0, ${progress * travel}px, 0)`
     }
 
@@ -77,13 +86,13 @@ export function SwordScrollbar() {
       schedule()
     }
 
-    // `is-scrolling` is what wakes the aura and embers up; it lapses shortly
-    // after the last scroll event so the sword settles again when you stop.
+    // `is-scrolling` is what wakes the aura, the embers and the bar's flare up; it
+    // lapses shortly after the last scroll event so both settle again when you stop.
     const onScroll = () => {
       schedule()
-      rail.classList.add('is-scrolling')
+      root.classList.add('is-scrolling')
       window.clearTimeout(idle)
-      idle = window.setTimeout(() => rail.classList.remove('is-scrolling'), 700)
+      idle = window.setTimeout(() => root.classList.remove('is-scrolling'), 700)
     }
 
     const onPointerDown = (event: PointerEvent) => {
@@ -128,16 +137,26 @@ export function SwordScrollbar() {
     observer.observe(document.documentElement)
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', remeasure)
-    sword.addEventListener('pointerdown', onPointerDown)
-    sword.addEventListener('pointermove', onPointerMove)
-    sword.addEventListener('pointerup', onPointerUp)
-    sword.addEventListener('pointercancel', onPointerUp)
-    rail.addEventListener('pointerdown', onRailPointerDown)
+    // Only a hovering pointer gets to grab the sword. A 20px handle at the very
+    // edge of a phone screen sits where the system's own edge gestures live, and
+    // the page already scrolls perfectly well by finger, so on touch the sword is
+    // there to be read and nothing else.
+    if (interactive) {
+      sword.addEventListener('pointerdown', onPointerDown)
+      sword.addEventListener('pointermove', onPointerMove)
+      sword.addEventListener('pointerup', onPointerUp)
+      sword.addEventListener('pointercancel', onPointerUp)
+      rail.addEventListener('pointerdown', onRailPointerDown)
+    }
 
     return () => {
       if (frame) cancelAnimationFrame(frame)
       window.clearTimeout(idle)
       observer.disconnect()
+      // State parked on <html> outlives this component, so it has to be cleared.
+      root.classList.remove('is-scrolling')
+      root.classList.remove('is-drawn')
+      root.style.removeProperty('--p')
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', remeasure)
       sword.removeEventListener('pointerdown', onPointerDown)
@@ -146,12 +165,17 @@ export function SwordScrollbar() {
       sword.removeEventListener('pointercancel', onPointerUp)
       rail.removeEventListener('pointerdown', onRailPointerDown)
     }
-  }, [enabled])
-
-  if (!enabled) return null
+  }, [interactive])
 
   return (
-    <div ref={railRef} className="sword-rail" aria-hidden="true">
+    <div
+      ref={railRef}
+      className="sword-rail"
+      // Written during render rather than from the effect, so a phone never gets a
+      // frame of the full-size sword before it shrinks.
+      data-compact={interactive ? undefined : ''}
+      aria-hidden="true"
+    >
       <span ref={sheathRef} className="sword-sheath" />
       <span className="sword-trail" />
       <div ref={swordRef} className="sword">

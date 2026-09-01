@@ -25,6 +25,12 @@
   --accent-text: #bd4426;
   --accent-soft: #f7e6df;
   --on-accent: #ffffff;
+
+  /* Ends of the scroll charge, shared by the sword in the gutter and the progress
+     bar across the top so the two read as one system. Deliberately the same in
+     both themes: it is otherworldly light, not page furniture. */
+  --charge-cold: #3f6bff;
+  --charge-hot: #ff2f86;
 }
 
 .dark {
@@ -616,12 +622,14 @@
   display: none;
 }
 
-/* Where the sword takes the page scrollbar over, the native bar would be a
-   second, redundant one — so it goes. Nested scrollers (textareas and the like)
-   keep the styled bar above. This query must stay in step with QUERY in
-   SwordScrollbar.tsx, and it is deliberately plain CSS rather than a class the
-   component adds, so the gutter is gone from the very first paint instead of
-   collapsing once React mounts. */
+/* Where the sword takes the page scrollbar over at full size, the native bar would
+   be a second, redundant one — so it goes. Touch keeps its own bar: it is a couple
+   of pixels at the extreme edge, it only shows mid-scroll, and the compact sword
+   cannot be grabbed, so it is worth leaving something there that can. Nested
+   scrollers (textareas and the like) keep the styled bar above. This query must
+   stay in step with INTERACTIVE in SwordScrollbar.tsx, and it is deliberately plain
+   CSS rather than a class the component adds, so the gutter is gone from the very
+   first paint instead of collapsing once React mounts. */
 @media (pointer: fine) and (min-width: 1024px) {
   html {
     scrollbar-width: none;
@@ -632,38 +640,211 @@
   }
 }
 
+/* Registering the progress variable is what lets a scroll() timeline animate it:
+   an unregistered custom property has no type to interpolate through and would
+   jump from 0 to 1 in one step. Both readouts below animate their own copy, and
+   both fall back to the one SwordScrollbar.tsx writes on <html>. */
+@property --p {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
 /* ---------------------------------------------------------------------------
-   Scroll progress. A 2px accent rule across the very top, scaled by how far
-   through the page you are. It rides a scroll() timeline, so the compositor
-   drives it and there is no scroll listener in JS; where that is unsupported it
-   stays at scaleX(0), i.e. invisible rather than broken.
+   Scroll progress. A hairline across the very top that fills as you go down,
+   charging through the same blue-to-rose ramp as the sword and led by a bright
+   node with a comet tail behind it. Unlike the sword this one is on every screen
+   and every pointer, so it is the readout that is always there.
+
+   Structure exists because of the scale: the host stays full width and unscaled,
+   .fill scales inside it, and .head is a full-width layer translated by the same
+   fraction — a child of the scaling element would be squashed with it, and a head
+   positioned with `left` would be laid out on the main thread every frame.
 --------------------------------------------------------------------------- */
 .scroll-progress {
+  --core: color-mix(in oklch, var(--charge-hot) calc(var(--p) * 100%), var(--charge-cold));
+  /* The node and its tail are the lit tip of the charge. On paper white a
+     mostly-white spark disappears, so light keeps the colour and only dark
+     blows it out towards white the way a glow on black wants. */
+  --lit: color-mix(in oklch, var(--core) 70%, #fff);
+
   position: fixed;
   inset: 0 0 auto;
   z-index: 55; /* over the fixed header, under the skip link and cursor */
   height: 2px;
-  transform: scaleX(0);
+  pointer-events: none; /* a 2px strip across the top must not eat clicks */
+}
+
+.dark .scroll-progress {
+  --lit: color-mix(in oklch, var(--core) 30%, #fff);
+}
+
+/* scaleX rather than width: a compositor job either way it is driven, and the
+   fallback path in SwordScrollbar.tsx feeds --p when there is no timeline. */
+.scroll-progress-fill {
+  position: absolute;
+  inset: 0;
+  transform: scaleX(var(--p));
   transform-origin: 0 50%;
-  background: linear-gradient(90deg, var(--accent-text), var(--accent));
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklch, var(--core) 55%, var(--charge-cold)),
+    var(--core)
+  );
+  box-shadow: 0 0 10px color-mix(in srgb, var(--core) 55%, transparent);
+}
+
+/* Full width, translated by the progress fraction, so `100%` of its own box is
+   exactly the width of the viewport it has to cross. */
+.scroll-progress-head {
+  position: absolute;
+  inset: 0;
+  transform: translateX(calc(var(--p) * 100%));
+  /* Nothing to lead at the top of the page: it fades in over the first stretch
+     of scrolling rather than sitting in the corner as a stray spark. */
+  opacity: calc(var(--p) * 12);
+}
+/* The tail: heat trailing the node, right up against its left side. */
+.scroll-progress-head::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 100%;
+  height: 2px;
+  width: 46px;
+  background: linear-gradient(90deg, transparent, var(--lit));
+}
+/* The node: a small rune diamond sitting astride the leading edge. */
+.scroll-progress-head::after {
+  content: '';
+  position: absolute;
+  top: -1.5px;
+  left: -2.5px;
+  height: 5px;
+  width: 5px;
+  border-radius: 1px;
+  rotate: 45deg;
+  background: var(--lit);
+  box-shadow:
+    0 0 6px 1px color-mix(in srgb, var(--core) 85%, transparent),
+    0 0 16px 3px color-mix(in srgb, var(--core) 45%, transparent);
+}
+
+/* Scrolling flares the bar the same way it flares the sword, and the bottom of
+   the page ignites it. Both classes land on <html> so the two readouts, which are
+   nowhere near each other in the DOM, can share one piece of state. */
+.is-scrolling .scroll-progress-fill,
+.is-drawn .scroll-progress-fill {
+  box-shadow: 0 0 16px color-mix(in srgb, var(--core) 75%, transparent);
+}
+.is-scrolling .scroll-progress-head::after {
+  scale: 1.25;
+}
+.is-drawn .scroll-progress-head::after {
+  scale: 1.4;
+}
+.scroll-progress-fill,
+.scroll-progress-head::after {
+  transition:
+    box-shadow 0.35s ease,
+    scale 0.35s ease;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Mana moving under the surface: a slow brightness swell, which is the one kind
+     of motion the fill can carry without the scaleX above stretching it. */
+  .scroll-progress-fill {
+    animation: charge-breathe 3.2s ease-in-out infinite alternate;
+  }
+  .scroll-progress-head::after {
+    animation: charge-node 1.6s ease-in-out infinite alternate;
+  }
+
+  @keyframes charge-breathe {
+    from {
+      filter: brightness(0.9);
+    }
+    to {
+      filter: brightness(1.35) saturate(1.15);
+    }
+  }
+  @keyframes charge-node {
+    from {
+      rotate: 45deg;
+    }
+    to {
+      rotate: 135deg;
+    }
+  }
 }
 
 @supports (animation-timeline: scroll()) {
+  /* Composited, so the fill edge and the node stay pinned to the scroll instead of
+     trailing it by a frame. These override the var()-driven declarations above,
+     which is what the no-timeline fallback is left running on. */
   .scroll-progress {
-    animation-name: scroll-progress;
+    animation-name: scroll-charge;
     /* `auto` hands the duration to the timeline; the shorthand would zero it. */
     animation-duration: auto;
     animation-timing-function: linear;
     animation-fill-mode: both;
     animation-timeline: scroll(root block);
   }
+  .scroll-progress-fill {
+    animation-name: progress-fill;
+    animation-duration: auto;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: scroll(root block);
+  }
+  .scroll-progress-head {
+    animation-name: progress-head;
+    animation-duration: auto;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: scroll(root block);
+  }
 
-  @keyframes scroll-progress {
+  @keyframes progress-fill {
     from {
       transform: scaleX(0);
     }
     to {
       transform: scaleX(1);
+    }
+  }
+  @keyframes progress-head {
+    from {
+      opacity: 0;
+      transform: translateX(0);
+    }
+    8% {
+      opacity: 1;
+    }
+    to {
+      opacity: 1;
+      transform: translateX(100%);
+    }
+  }
+  @keyframes scroll-charge {
+    from {
+      --p: 0;
+    }
+    to {
+      --p: 1;
+    }
+  }
+
+  /* The breathing filter and the fill's own scaleX would be two animations
+     fighting over one property, so the swell moves to the host instead. */
+  @media (prefers-reduced-motion: no-preference) {
+    .scroll-progress-fill {
+      animation-name: progress-fill, charge-breathe;
+      animation-duration: auto, 3.2s;
+      animation-timing-function: linear, ease-in-out;
+      animation-iteration-count: 1, infinite;
+      animation-direction: normal, alternate;
+      animation-timeline: scroll(root block), auto;
     }
   }
 }
@@ -681,17 +862,9 @@
    to load, and it follows the theme.
 --------------------------------------------------------------------------- */
 
-/* Registering the progress variable is what lets a scroll() timeline animate it
-   below; an unregistered custom property has no type to interpolate through and
-   would jump from 0 to 1 in one step. */
-@property --p {
-  syntax: '<number>';
-  inherits: true;
-  initial-value: 0;
-}
-
+/* The blade is drawn from --p exactly as the bar above is; the registration for it
+   lives up there with the first thing that uses it. */
 .sword-rail {
-  --p: 0; /* scroll progress: a scroll() timeline where supported, else JS */
   /* Geometry the sheath, the sword and the travel distance all derive from, so
      the three cannot drift apart. */
   --pad: 10px;
@@ -700,9 +873,8 @@
   /* The charge ramp. Every lit part of the sword mixes off --core, and --core is
      mixed by --p, so the colour *is* the scroll position — no marks needed on the
      blade to read it. oklch is what keeps the walk from blue to magenta going
-     through violet instead of sagging through grey the way srgb does. */
-  --charge-cold: #3f6bff;
-  --charge-hot: #ff2f86;
+     through violet instead of sagging through grey the way srgb does. --p comes
+     from the timeline below, or from <html> where SwordScrollbar.tsx writes it. */
   --core: color-mix(in oklch, var(--charge-hot) calc(var(--p) * 100%), var(--charge-cold));
   --glow: color-mix(in srgb, var(--core) 50%, transparent);
   --edge: color-mix(in oklch, var(--core) 22%, #eef1ff);
@@ -721,12 +893,44 @@
   bottom: 0;
   z-index: 60; /* over the page and header, under the custom cursor */
   width: 18px;
+  /* Makes the rail a size container so the sword's travel below can be measured
+     in cqh — its own height — instead of 100vh. On a phone those two are not the
+     same number: vh is the viewport with the URL bar hidden, so the sword would
+     run past the bottom of the screen while the bar is showing. */
+  container-type: size;
 }
 .dark .sword-rail {
   --ink-base: #04030f;
 }
 /* Nothing to scroll, nothing to draw. */
 .sword-rail[data-inactive] {
+  display: none;
+}
+
+/* Touch, tablets, narrow windows: same sword, same charge, two thirds the size
+   and no hit area at all. It sits closer to the edge and out of the way of the
+   text, which stops at the section padding, and the hover bob and the flare while
+   scrolling shrink with it because they are inside the scaled body. The embers go
+   — at this size they are single pixels, and they are the one part that animates
+   a blurred shadow per frame on the weakest devices. */
+.sword-rail[data-compact] {
+  --pad: 6px;
+  /* 118px of sword at 0.72, so the box the travel is measured from and the sword
+     you can actually see are still the same height. */
+  --sword-h: 85px;
+  /* Far enough in that the aura's soft edge is not sliced off by the side of the
+     screen, still well clear of the text, which stops at the section padding. */
+  right: 4px;
+  width: 12px;
+  pointer-events: none;
+}
+.sword-rail[data-compact] .sword-body {
+  /* The `scale` property, not transform: sword-hover already animates transform
+     on this element and the two would overwrite each other. */
+  scale: 0.72;
+  transform-origin: 50% 0;
+}
+.sword-rail[data-compact] .sword-embers {
   display: none;
 }
 
@@ -985,8 +1189,9 @@
 --------------------------------------------------------------------------- */
 @supports (animation-timeline: scroll()) {
   .sword-rail {
-    /* Longhands, not the shorthand: `animation` would reset duration to 0s. */
-    animation-name: sword-charge;
+    /* Longhands, not the shorthand: `animation` would reset duration to 0s. The
+       charge keyframe is shared with the bar across the top. */
+    animation-name: scroll-charge;
     animation-duration: auto;
     animation-timing-function: linear;
     animation-fill-mode: both;
@@ -1007,15 +1212,16 @@
     animation-timeline: scroll(root block);
   }
 
-  /* The rail is fixed from the top to the bottom of the viewport, so its height
-     is 100vh and the sword's travel is that less the two end pads and the sword
-     itself — the same three values the layout above is built from. */
+  /* The rail runs the full height of the viewport, so the sword's travel is that
+     height less the two end pads and the sword itself — the same three values the
+     layout above is built from. cqh is the rail's own height (see container-type
+     up there), which is what keeps this honest on a phone. */
   @keyframes sword-travel {
     from {
       transform: translate3d(0, 0, 0);
     }
     to {
-      transform: translate3d(0, calc(100vh - var(--pad) * 2 - var(--sword-h)), 0);
+      transform: translate3d(0, calc(100cqh - var(--pad) * 2 - var(--sword-h)), 0);
     }
   }
   @keyframes sword-fill {
@@ -1024,14 +1230,6 @@
     }
     to {
       transform: scaleY(1);
-    }
-  }
-  @keyframes sword-charge {
-    from {
-      --p: 0;
-    }
-    to {
-      --p: 1;
     }
   }
 }

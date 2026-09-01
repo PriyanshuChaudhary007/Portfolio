@@ -20,8 +20,12 @@ export default function App() {
     <>
       <CursorGlow />
 
-      {/* Reading position, drawn as a rule across the top of the page. */}
-      <div className="scroll-progress" aria-hidden="true" />
+      {/* Reading position, drawn as a charged rule across the top of the page.
+          The fill scales and the head is carried along in front of it. */}
+      <div className="scroll-progress" aria-hidden="true">
+        <span className="scroll-progress-fill" />
+        <span className="scroll-progress-head" />
+      </div>
 
       <SwordScrollbar />
 
