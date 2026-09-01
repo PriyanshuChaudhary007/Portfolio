@@ -56,7 +56,7 @@ export const projects: Project[] = [
     install: 'npm i virtual-ui-com-lib',
     links: [
       { label: 'Live demo', href: 'https://virtual-ui-client.vercel.app', type: 'demo' },
-      { label: 'View repository', href: 'https://github.com/PriyanshuChaudhary007/virtual-ui', type: 'github' },
+      { label: 'View repository', href: 'https://github.com/PriyanshuChaudhary007/React-ui-componentlibrary', type: 'github' },
       { label: 'View on npm', href: 'https://www.npmjs.com/package/virtual-ui-com-lib', type: 'npm' },
     ],
   },
