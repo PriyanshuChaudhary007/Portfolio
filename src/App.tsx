@@ -1,5 +1,6 @@
 import { About } from './components/About'
 import { Contact } from './components/Contact'
+import { Credentials } from './components/Credentials'
 import { CursorGlow } from './components/CursorGlow'
 import { Education } from './components/Education'
 import { Experience } from './components/Experience'
@@ -34,6 +35,7 @@ export default function App() {
         <Projects />
         <Experience />
         <Education />
+        <Credentials />
         <Exploring />
         <Contact />
       </main>

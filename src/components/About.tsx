@@ -46,7 +46,7 @@ export function About() {
               </div>
               <div>
                 <dt className="font-mono text-xs text-faint">Certifications</dt>
-                <dd className="mt-1 text-text">{certifications.length} completed — see below</dd>
+                <dd className="mt-1 text-text">{certifications.length} completed - see below</dd>
               </div>
             </dl>
           </div>

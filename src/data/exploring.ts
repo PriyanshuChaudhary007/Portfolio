@@ -8,7 +8,7 @@ export interface ExploringItem {
 export const exploring: ExploringItem[] = [
   {
     title: 'Generative AI in products',
-    detail: 'Wiring models like Gemini and the OpenAI tools into real user-facing features — not just demos.',
+    detail: 'Wiring models like Gemini and the OpenAI tools into real user-facing features - not just demos.',
   },
   {
     title: 'Voice interfaces',

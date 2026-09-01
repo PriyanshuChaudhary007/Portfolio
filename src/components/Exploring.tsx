@@ -7,11 +7,10 @@ export function Exploring() {
   return (
     <Section
       id="exploring"
-      index="06"
+      index="07"
       eyebrow="Currently Exploring"
       title="What I'm digging into right now"
-      intro="Not a finished list — just where my attention goes when I'm learning, and what tends to feed back into what I build."
-      alt
+      intro="Not a finished list - just where my attention goes when I'm learning, and what tends to feed back into what I build."
     >
       <div className="grid gap-x-12 gap-y-8 sm:grid-cols-2">
         {exploring.map((item, i) => (

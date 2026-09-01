@@ -47,7 +47,7 @@ export const projects: Project[] = [
     problem:
       'Repetitive UI work slows teams down. This library pairs a set of reusable components with generated ones built on demand, so a one-off component is a sentence rather than an afternoon.',
     highlights: [
-      'Prompts go through OpenRouter and come back as strict JSON — name, code and props — rendered live in a react-live sandbox.',
+      'Prompts go through OpenRouter and come back as strict JSON - name, code and props - rendered live in a react-live sandbox.',
       'Credit-based access: accounts start with 150 credits and each generation spends 50, topped up through Razorpay with server-side signature verification.',
       'Google sign-in with Firebase on the client and an httpOnly JWT cookie from the API, shared across both deployed domains.',
       'An admin publish flow writes an approved component into the library package, rebuilds it and ships a patch release to npm.',

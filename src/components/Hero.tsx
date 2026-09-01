@@ -18,29 +18,19 @@ export function Hero() {
 
       <div className="relative mx-auto w-full max-w-6xl px-6 pb-20 pt-32 sm:pb-28 sm:pt-40 lg:px-8">
         <Reveal>
-          <p className="inline-flex items-center gap-2.5 font-mono text-sm text-muted">
-            <span className="relative flex size-2">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60" />
-              <span className="relative inline-flex size-2 rounded-full bg-accent" />
-            </span>
-            Full Stack Developer Intern · Correm Advisory
-          </p>
-        </Reveal>
-
-        <Reveal delay={60}>
-          <h1 className="mt-6 max-w-4xl text-5xl font-semibold leading-[1.02] sm:text-6xl lg:text-7xl">
+          <h1 className="max-w-4xl text-5xl font-semibold leading-[1.02] sm:text-6xl lg:text-7xl">
             {profile.name}
           </h1>
         </Reveal>
 
-        <Reveal delay={120}>
+        <Reveal delay={60}>
           <p className="mt-6 max-w-2xl text-xl leading-relaxed text-muted sm:text-2xl">
-            Full stack developer building <span className="text-accent-text">practical web applications</span> — and
+            Full stack developer building <span className="text-accent-text">practical web applications</span> - and
             exploring how <span className="text-accent-text">generative AI</span> fits into real products.
           </p>
         </Reveal>
 
-        <Reveal delay={180}>
+        <Reveal delay={120}>
           <ul className="mt-8 flex flex-wrap gap-2">
             {heroStack.map((tech) => (
               <li
@@ -53,7 +43,7 @@ export function Hero() {
           </ul>
         </Reveal>
 
-        <Reveal delay={240}>
+        <Reveal delay={180}>
           <div className="mt-10 flex flex-wrap items-center gap-3">
             <a
               href="#projects"
@@ -101,7 +91,7 @@ export function Hero() {
           </div>
         </Reveal>
 
-        <Reveal delay={300}>
+        <Reveal delay={240}>
           <dl className="mt-14 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-line pt-6 font-mono text-sm text-faint">
             <div className="flex items-center gap-2">
               <dt className="sr-only">Based in</dt>

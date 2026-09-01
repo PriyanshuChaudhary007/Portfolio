@@ -38,7 +38,7 @@ export function ContactForm() {
       const result = await res.json()
       if (result.success === true || result.success === 'true') {
         setStatus('success')
-        setMessage("Thanks — your message is on its way. I'll get back to you soon.")
+        setMessage("Thanks - your message is on its way. I'll get back to you soon.")
         form.reset()
       } else {
         setStatus('error')
@@ -46,7 +46,7 @@ export function ContactForm() {
       }
     } catch {
       setStatus('error')
-      setMessage(`Network error — please try again, or email me directly at ${profile.email}.`)
+      setMessage(`Network error - please try again, or email me directly at ${profile.email}.`)
     }
   }
 

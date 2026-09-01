@@ -47,7 +47,7 @@ export function Contact() {
               {/* left — intro + direct links */}
               <div>
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-sm text-accent-text">07</span>
+                  <span className="font-mono text-sm text-accent-text">08</span>
                   <span className="h-px w-8 bg-line-strong" aria-hidden="true" />
                   <span className="font-mono text-xs uppercase tracking-[0.2em] text-faint">Contact</span>
                 </div>
