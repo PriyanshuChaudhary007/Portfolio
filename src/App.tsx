@@ -10,6 +10,7 @@ import { Hero } from './components/Hero'
 import { Navbar } from './components/Navbar'
 import { Projects } from './components/Projects'
 import { Skills } from './components/Skills'
+import { SwordScrollbar } from './components/SwordScrollbar'
 import { useTheme } from './hooks/useTheme'
 
 export default function App() {
@@ -18,6 +19,11 @@ export default function App() {
   return (
     <>
       <CursorGlow />
+
+      {/* Reading position, drawn as a rule across the top of the page. */}
+      <div className="scroll-progress" aria-hidden="true" />
+
+      <SwordScrollbar />
 
       <a
         href="#main"

@@ -565,3 +565,474 @@
 .cursor-ring.is-pressed {
   transform: scale(0.85) !important;
 }
+
+/* ---------------------------------------------------------------------------
+   Scrollbar. The native Windows bar — white track, stepper arrows — reads as a
+   different piece of software sitting next to this palette, so it is replaced by
+   a slim trackless pill built from the same tokens, which means it follows the
+   theme. Chromium ignores ::-webkit-scrollbar on any element that also sets
+   scrollbar-width / scrollbar-color, so the standard properties are kept behind
+   a support query for the engines that only understand those.
+--------------------------------------------------------------------------- */
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+/* The transparent border plus a content-box clip is what makes the visible pill
+   narrower than its 12px hit area: easy to grab, quiet to look at. Grabbing it
+   warms it from neutral to full accent as the inset shrinks. */
+::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--accent) 40%, var(--line-strong));
+  background-clip: content-box;
+  border: 4px solid transparent;
+  border-radius: 9999px;
+  transition:
+    background-color 0.25s ease,
+    border-width 0.25s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--accent) 75%, var(--line-strong));
+  border-width: 3px;
+}
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--accent);
+  border-width: 2px;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+/* The stepper arrows are the most obviously native part of the bar. */
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Where the sword takes the page scrollbar over, the native bar would be a
+   second, redundant one — so it goes. Nested scrollers (textareas and the like)
+   keep the styled bar above. This query must stay in step with QUERY in
+   SwordScrollbar.tsx, and it is deliberately plain CSS rather than a class the
+   component adds, so the gutter is gone from the very first paint instead of
+   collapsing once React mounts. */
+@media (pointer: fine) and (min-width: 1024px) {
+  html {
+    scrollbar-width: none;
+  }
+  html::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Scroll progress. A 2px accent rule across the very top, scaled by how far
+   through the page you are. It rides a scroll() timeline, so the compositor
+   drives it and there is no scroll listener in JS; where that is unsupported it
+   stays at scaleX(0), i.e. invisible rather than broken.
+--------------------------------------------------------------------------- */
+.scroll-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 55; /* over the fixed header, under the skip link and cursor */
+  height: 2px;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, var(--accent-text), var(--accent));
+}
+
+@supports (animation-timeline: scroll()) {
+  .scroll-progress {
+    animation-name: scroll-progress;
+    /* `auto` hands the duration to the timeline; the shorthand would zero it. */
+    animation-duration: auto;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: scroll(root block);
+  }
+
+  @keyframes scroll-progress {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Sword scrollbar. The sheath line is the track, the sword is the thumb, and
+   the trail behind it fills as the page goes down. The blade itself is the
+   readout: it starts cold at the top of the page and heats through violet into
+   magenta as you descend, flares while you are actually scrolling, and ignites
+   at the bottom.
+
+   Colours are the hero gate's indigo and violet rather than the site accent, so
+   the two otherworldly pieces of the page belong to each other, and the hot end
+   lands near the accent's warmth. The sword is drawn entirely in CSS — no image
+   to load, and it follows the theme.
+--------------------------------------------------------------------------- */
+
+/* Registering the progress variable is what lets a scroll() timeline animate it
+   below; an unregistered custom property has no type to interpolate through and
+   would jump from 0 to 1 in one step. */
+@property --p {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.sword-rail {
+  --p: 0; /* scroll progress: a scroll() timeline where supported, else JS */
+  /* Geometry the sheath, the sword and the travel distance all derive from, so
+     the three cannot drift apart. */
+  --pad: 10px;
+  --sword-h: 118px;
+
+  /* The charge ramp. Every lit part of the sword mixes off --core, and --core is
+     mixed by --p, so the colour *is* the scroll position — no marks needed on the
+     blade to read it. oklch is what keeps the walk from blue to magenta going
+     through violet instead of sagging through grey the way srgb does. */
+  --charge-cold: #3f6bff;
+  --charge-hot: #ff2f86;
+  --core: color-mix(in oklch, var(--charge-hot) calc(var(--p) * 100%), var(--charge-cold));
+  --glow: color-mix(in srgb, var(--core) 50%, transparent);
+  --edge: color-mix(in oklch, var(--core) 22%, #eef1ff);
+
+  /* The blade's dark body and its recessed edges take the charge as well, at a
+     small enough fraction to stay near-black. Left as fixed violets they would
+     hold a blue cast at the bottom of the page and fight the colour underneath
+     them, and the body is the widest surface on the sword. */
+  --ink-base: #07041a;
+  --ink: color-mix(in oklch, var(--core) 26%, var(--ink-base));
+  --ink-deep: color-mix(in oklch, var(--core) 14%, var(--ink-base));
+
+  position: fixed;
+  top: 0;
+  right: 3px;
+  bottom: 0;
+  z-index: 60; /* over the page and header, under the custom cursor */
+  width: 18px;
+}
+.dark .sword-rail {
+  --ink-base: #04030f;
+}
+/* Nothing to scroll, nothing to draw. */
+.sword-rail[data-inactive] {
+  display: none;
+}
+
+/* Track and the energy left behind it. Both are 2px pills on the rail's centre
+   line. The trail fills by scaling rather than by growing its height: scaleY is
+   a compositor job, height would relayout the rail on every scrolled pixel. */
+.sword-sheath,
+.sword-trail {
+  position: absolute;
+  top: var(--pad);
+  left: 50%;
+  height: calc(100% - var(--pad) * 2);
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 999px;
+}
+.sword-sheath {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--line-strong) 10%,
+    var(--line-strong) 90%,
+    transparent
+  );
+  opacity: 0.6;
+}
+.sword-trail {
+  transform: scaleY(var(--p));
+  transform-origin: 50% 0;
+  will-change: transform;
+  /* scaleY squashes the whole ramp into the filled part, so its hot end is
+     always exactly at the sword: the trail reads as the heat left behind it. */
+  background: linear-gradient(180deg, color-mix(in srgb, var(--charge-cold) 6%, transparent), var(--core));
+  box-shadow: 0 0 10px var(--glow);
+}
+
+/* The sword itself: `.sword` is the positioner the scroll drives, `.sword-body`
+   carries every animation, so the two never fight over `transform`. */
+.sword {
+  position: absolute;
+  top: var(--pad);
+  left: 50%;
+  height: var(--sword-h);
+  width: 20px;
+  margin-left: -10px;
+  cursor: grab;
+  touch-action: none;
+  will-change: transform;
+}
+.sword-rail.is-dragging .sword {
+  cursor: grabbing;
+}
+.sword-body {
+  position: absolute;
+  inset: 0;
+}
+
+/* Pommel, wrapped grip, quilloned guard, then a blade clipped to a point. */
+.sword-pommel {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 9px;
+  width: 9px;
+  margin-left: -4.5px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 32%, var(--edge), var(--core) 52%, var(--ink-deep));
+  box-shadow: 0 0 7px color-mix(in srgb, var(--core) 75%, transparent);
+}
+.sword-grip {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  height: 19px;
+  width: 5px;
+  margin-left: -2.5px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(
+    180deg,
+    var(--ink-deep) 0 3px,
+    color-mix(in srgb, var(--edge) 30%, transparent) 3px 4px
+  );
+}
+.sword-guard {
+  position: absolute;
+  top: 26px;
+  left: 50%;
+  height: 6px;
+  width: 18px;
+  margin-left: -9px;
+  clip-path: polygon(0 15%, 15% 0, 85% 0, 100% 15%, 90% 100%, 10% 100%);
+  background: linear-gradient(90deg, var(--core), var(--edge) 50%, var(--core));
+  box-shadow: 0 0 9px color-mix(in srgb, var(--core) 65%, transparent);
+}
+/* Three layers: a highlight coming off the guard, the lit fuller down the
+   middle, and the body — all of them mixed off --core, so the whole blade
+   changes hue together as the page goes down. */
+.sword-blade {
+  position: absolute;
+  top: 31px;
+  left: 50%;
+  height: 87px;
+  width: 10px;
+  margin-left: -5px;
+  clip-path: polygon(50% 100%, 0 85%, 0 0, 100% 0, 100% 85%);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--edge) 55%, transparent), transparent 20%),
+    linear-gradient(90deg, var(--ink-deep) 0 36%, var(--glow) 50%, var(--ink-deep) 64%),
+    linear-gradient(
+      180deg,
+      var(--ink),
+      color-mix(in oklch, var(--core) 42%, var(--ink-deep)) 62%,
+      var(--ink-deep)
+    );
+  transition:
+    filter 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+/* Shadow energy around the blade, dim at rest and flared while scrolling. */
+.sword-aura {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  height: 104px;
+  width: 38px;
+  margin-left: -19px;
+  border-radius: 999px;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--core) 45%, transparent), transparent 76%);
+  filter: blur(7px);
+  opacity: 0.42;
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease;
+}
+.is-scrolling .sword-aura,
+.is-dragging .sword-aura {
+  opacity: 1;
+  transform: scale(1.16);
+}
+.is-scrolling .sword-blade,
+.is-dragging .sword-blade {
+  filter: brightness(1.5) saturate(1.2);
+}
+/* The bottom of the page is the sword fully drawn. */
+.is-drawn .sword-blade {
+  filter: brightness(1.7) saturate(1.25);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--core) 55%, transparent);
+}
+.is-drawn .sword-aura {
+  opacity: 1;
+}
+
+/* A ring breaking off the guard, and embers rising off the blade. Both idle in a
+   paused state so scrolling starts them without JS restarting anything, and both
+   take the blade's current colour. */
+.sword-pulse {
+  position: absolute;
+  top: 29px;
+  left: 50%;
+  height: 14px;
+  width: 14px;
+  margin-left: -7px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--edge) 75%, transparent);
+  opacity: 0;
+}
+.sword-embers > span {
+  position: absolute;
+  top: 44px;
+  left: 50%;
+  height: 3px;
+  width: 3px;
+  margin-left: -1.5px;
+  border-radius: 999px;
+  background: var(--edge);
+  box-shadow: 0 0 5px color-mix(in srgb, var(--edge) 90%, transparent);
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Idle hover of the sword in its sheath. */
+  .sword-body {
+    animation: sword-hover 4.6s ease-in-out infinite alternate;
+  }
+  .sword-pulse {
+    animation: sword-pulse 1.15s ease-out infinite;
+    animation-play-state: paused;
+  }
+  .sword-embers > span {
+    animation: sword-ember 2.6s linear infinite;
+    animation-play-state: paused;
+  }
+  .sword-embers > span:nth-child(2) {
+    --drift: -7px;
+    animation-duration: 3.4s;
+    animation-delay: -1.2s;
+  }
+  .sword-embers > span:nth-child(3) {
+    --drift: 6px;
+    animation-duration: 2.1s;
+    animation-delay: -0.7s;
+  }
+  .is-scrolling .sword-pulse,
+  .is-dragging .sword-pulse,
+  .is-scrolling .sword-embers > span,
+  .is-dragging .sword-embers > span {
+    animation-play-state: running;
+  }
+
+  @keyframes sword-hover {
+    from {
+      transform: translateY(-2.5px);
+    }
+    to {
+      transform: translateY(2.5px);
+    }
+  }
+  @keyframes sword-pulse {
+    0% {
+      opacity: 0.8;
+      transform: scale(0.45);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(2.3);
+    }
+  }
+  @keyframes sword-ember {
+    0% {
+      opacity: 0;
+      transform: translate3d(0, 0, 0) scale(0.6);
+    }
+    22% {
+      opacity: 0.95;
+    }
+    100% {
+      opacity: 0;
+      transform: translate3d(var(--drift, 5px), -48px, 0) scale(0.2);
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Where scroll() timelines exist, the sword's position, the trail's fill and the
+   rune charge all hang off the document's scroll offset directly. That is the
+   difference between smooth and not: a scroll event plus rAF can only ever draw
+   the sword where the page *was* one frame ago, so it visibly lags and stutters
+   behind a wheel or trackpad scroll, which the compositor is meanwhile moving at
+   full rate. Driven by a timeline, transform and scale are composited alongside
+   the scroll itself and cannot fall behind it.
+
+   These override the JS-written inline transform (animations outrank inline
+   styles), so the fallback path in SwordScrollbar.tsx stays harmless here — and
+   it keeps working where the timeline is unsupported.
+--------------------------------------------------------------------------- */
+@supports (animation-timeline: scroll()) {
+  .sword-rail {
+    /* Longhands, not the shorthand: `animation` would reset duration to 0s. */
+    animation-name: sword-charge;
+    animation-duration: auto;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: scroll(root block);
+  }
+  .sword {
+    animation-name: sword-travel;
+    animation-duration: auto;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: scroll(root block);
+  }
+  .sword-trail {
+    animation-name: sword-fill;
+    animation-duration: auto;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: scroll(root block);
+  }
+
+  /* The rail is fixed from the top to the bottom of the viewport, so its height
+     is 100vh and the sword's travel is that less the two end pads and the sword
+     itself — the same three values the layout above is built from. */
+  @keyframes sword-travel {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(0, calc(100vh - var(--pad) * 2 - var(--sword-h)), 0);
+    }
+  }
+  @keyframes sword-fill {
+    from {
+      transform: scaleY(0);
+    }
+    to {
+      transform: scaleY(1);
+    }
+  }
+  @keyframes sword-charge {
+    from {
+      --p: 0;
+    }
+    to {
+      --p: 1;
+    }
+  }
+}
+

@@ -34,6 +34,22 @@ export function CursorGlow() {
     ring.style.visibility = 'hidden'
     dot.style.visibility = 'hidden'
 
+    // Eases the ring towards the pointer and then parks itself: a loop that runs
+    // for the life of the page is a main-thread task on every single frame, and
+    // it has to share those frames with scrolling. `onMove` wakes it again.
+    const tick = () => {
+      const dx = mouseX - ringX
+      const dy = mouseY - ringY
+      if (Math.abs(dx) < 0.05 && Math.abs(dy) < 0.05) {
+        raf = 0
+        return
+      }
+      ringX += dx * 0.18
+      ringY += dy * 0.18
+      ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`
+      raf = requestAnimationFrame(tick)
+    }
+
     const onMove = (event: MouseEvent) => {
       mouseX = event.clientX
       mouseY = event.clientY
@@ -41,10 +57,12 @@ export function CursorGlow() {
       if (!visible) {
         ringX = mouseX
         ringY = mouseY
+        ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`
         visible = true
         ring.style.visibility = 'visible'
         dot.style.visibility = 'visible'
       }
+      if (!raf) raf = requestAnimationFrame(tick)
     }
 
     const onOver = (event: MouseEvent) => {
@@ -61,19 +79,11 @@ export function CursorGlow() {
       visible = false
     }
 
-    const tick = () => {
-      ringX += (mouseX - ringX) * 0.18
-      ringY += (mouseY - ringY) * 0.18
-      ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`
-      raf = requestAnimationFrame(tick)
-    }
-
     window.addEventListener('mousemove', onMove, { passive: true })
     window.addEventListener('mouseover', onOver, { passive: true })
     window.addEventListener('mousedown', onDown)
     window.addEventListener('mouseup', onUp)
     document.addEventListener('mouseleave', onLeave)
-    raf = requestAnimationFrame(tick)
 
     return () => {
       cancelAnimationFrame(raf)
