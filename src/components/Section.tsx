@@ -30,11 +30,17 @@ export function Section({ id, index, eyebrow, title, intro, children, className,
             <span className="h-px w-8 bg-line-strong" aria-hidden="true" />
             <span className="font-mono text-xs uppercase tracking-[0.2em] text-faint">{eyebrow}</span>
           </div>
+        </Reveal>
+        <Reveal delay={90}>
           <h2 id={`${id}-heading`} className="mt-4 max-w-2xl text-3xl sm:text-4xl md:text-[2.6rem]">
             {title}
           </h2>
-          {intro ? <p className="mt-5 max-w-2xl text-lg text-muted">{intro}</p> : null}
         </Reveal>
+        {intro ? (
+          <Reveal delay={180}>
+            <p className="mt-5 max-w-2xl text-lg text-muted">{intro}</p>
+          </Reveal>
+        ) : null}
         <div className="mt-12 sm:mt-16">{children}</div>
       </div>
     </section>

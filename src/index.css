@@ -93,6 +93,13 @@
     line-height: 1.1;
   }
 
+  /* Reveals slide in from off to the side; clip so they can't add a horizontal
+     scrollbar mid-animation. `clip` (not `hidden`) keeps this from becoming a
+     scroll container, so the fixed navbar and anchor scrolling stay intact. */
+  main {
+    overflow-x: clip;
+  }
+
   ::selection {
     background-color: var(--accent);
     color: var(--on-accent);
@@ -121,29 +128,78 @@
 /* ---------------------------------------------------------------------------
    Reveal-on-scroll. The hidden state only applies when motion is allowed,
    so reduced-motion users (and no-JS) always see fully-rendered content.
-   Directional variants let sections enter from a chosen edge.
+   Each variant only re-points the custom properties, which keeps `.is-visible`
+   winning without any specificity juggling.
 --------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: no-preference) {
   .reveal {
+    --reveal-x: 0px;
+    --reveal-y: 28px;
+    --reveal-scale: 1;
+    --reveal-rotate: 0deg;
+    --reveal-blur: 4px;
+    --reveal-duration: 0.78s;
+
     opacity: 0;
-    transform: translateY(20px);
+    transform: translate3d(var(--reveal-x), var(--reveal-y), 0) scale(var(--reveal-scale))
+      rotate(var(--reveal-rotate));
+    filter: blur(var(--reveal-blur));
     transition:
-      opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-      transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity var(--reveal-duration) cubic-bezier(0.16, 1, 0.3, 1),
+      transform var(--reveal-duration) cubic-bezier(0.16, 1, 0.3, 1),
+      filter var(--reveal-duration) cubic-bezier(0.16, 1, 0.3, 1);
     will-change: opacity, transform;
   }
   .reveal-left {
-    transform: translateX(-24px);
+    --reveal-x: -28px;
+    --reveal-y: 0px;
   }
   .reveal-right {
-    transform: translateX(24px);
+    --reveal-x: 28px;
+    --reveal-y: 0px;
   }
   .reveal-scale {
-    transform: scale(0.96);
+    --reveal-y: 0px;
+    --reveal-scale: 0.96;
+  }
+  /* Cards: a long, tilted sweep in from the page edge. */
+  .reveal-sweep-left,
+  .reveal-sweep-right {
+    --reveal-y: 14px;
+    --reveal-scale: 0.955;
+    --reveal-blur: 8px;
+    --reveal-duration: 0.95s;
+  }
+  .reveal-sweep-left {
+    --reveal-x: -40px;
+    --reveal-rotate: -1.2deg;
+  }
+  .reveal-sweep-right {
+    --reveal-x: 40px;
+    --reveal-rotate: 1.2deg;
+  }
+  /* Room for a longer travel once the layout is wide enough to absorb it. */
+  @media (min-width: 640px) {
+    .reveal-sweep-left {
+      --reveal-x: -96px;
+    }
+    .reveal-sweep-right {
+      --reveal-x: 96px;
+    }
   }
   .reveal.is-visible {
     opacity: 1;
     transform: none;
+    filter: none;
+  }
+}
+
+/* Never hand a printer an invisible page. */
+@media print {
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
   }
 }
 

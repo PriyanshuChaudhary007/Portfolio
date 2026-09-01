@@ -16,7 +16,11 @@ export function Projects() {
     >
       <div className="space-y-6">
         {projects.map((project, i) => (
-          <Reveal key={project.id} direction={i % 2 === 1 ? 'right' : 'left'}>
+          <Reveal
+            key={project.id}
+            direction={i % 2 === 1 ? 'sweep-right' : 'sweep-left'}
+            delay={i * 90}
+          >
             <ProjectCard project={project} index={i} reversed={i % 2 === 1} />
           </Reveal>
         ))}

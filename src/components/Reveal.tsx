@@ -2,14 +2,17 @@ import type { ReactNode } from 'react'
 import { useInView } from '../hooks/useInView'
 import { cn } from '../lib/cn'
 
-type RevealDirection = 'up' | 'left' | 'right' | 'scale'
+type RevealDirection = 'up' | 'left' | 'right' | 'scale' | 'sweep-left' | 'sweep-right'
 
 interface RevealProps {
   children: ReactNode
   className?: string
   /** Optional stagger, in ms. */
   delay?: number
-  /** Which edge the content eases in from. Defaults to 'up'. */
+  /**
+   * Which edge the content eases in from. Defaults to 'up'. The `sweep-*`
+   * variants travel much further and add a tilt — meant for whole cards.
+   */
   direction?: RevealDirection
 }
 
@@ -18,10 +21,13 @@ const directionClass: Record<RevealDirection, string> = {
   left: 'reveal-left',
   right: 'reveal-right',
   scale: 'reveal-scale',
+  'sweep-left': 'reveal-sweep-left',
+  'sweep-right': 'reveal-sweep-right',
 }
 
-// Thin wrapper that fades + lifts its children into view once. The motion
-// itself is defined in CSS and disabled under prefers-reduced-motion.
+// Thin wrapper that fades, lifts and un-blurs its children into view whenever
+// they enter the viewport. The motion itself is defined in CSS and disabled
+// under prefers-reduced-motion.
 export function Reveal({ children, className, delay = 0, direction = 'up' }: RevealProps) {
   const { ref, inView } = useInView<HTMLDivElement>()
 
