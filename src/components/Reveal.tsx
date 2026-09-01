@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useInView } from '../hooks/useInView'
 import { cn } from '../lib/cn'
 
-type RevealDirection = 'up' | 'left' | 'right' | 'scale' | 'sweep-left' | 'sweep-right'
+type RevealDirection = 'up' | 'left' | 'right' | 'scale' | 'sweep-left' | 'sweep-right' | 'gate'
 
 interface RevealProps {
   children: ReactNode
@@ -12,6 +12,7 @@ interface RevealProps {
   /**
    * Which edge the content eases in from. Defaults to 'up'. The `sweep-*`
    * variants travel much further and add a tilt — meant for whole cards.
+   * `gate` opens outward from a smaller, heavily blurred state.
    */
   direction?: RevealDirection
 }
@@ -23,6 +24,7 @@ const directionClass: Record<RevealDirection, string> = {
   scale: 'reveal-scale',
   'sweep-left': 'reveal-sweep-left',
   'sweep-right': 'reveal-sweep-right',
+  gate: 'reveal-gate',
 }
 
 // Thin wrapper that fades, lifts and un-blurs its children into view whenever

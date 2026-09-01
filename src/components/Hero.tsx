@@ -1,4 +1,5 @@
 import { heroStack, profile } from '../data/profile'
+import { HeroGate } from './HeroGate'
 import { ArrowDown, ArrowUpRight, Github, Linkedin, Mail } from './icons'
 import { Reveal } from './Reveal'
 
@@ -17,79 +18,92 @@ export function Hero() {
       />
 
       <div className="relative mx-auto w-full max-w-6xl px-6 pb-20 pt-32 sm:pb-28 sm:pt-40 lg:px-8">
-        <Reveal>
-          <h1 className="max-w-4xl text-5xl font-semibold leading-[1.02] sm:text-6xl lg:text-7xl">
-            {profile.name}
-          </h1>
-        </Reveal>
+        <div className="grid items-center gap-y-10 lg:grid-cols-[minmax(0,1fr)_21rem] lg:gap-x-10 xl:grid-cols-[minmax(0,1fr)_25rem] xl:gap-x-14">
+          <div>
+            <Reveal>
+              <h1 className="max-w-4xl text-5xl font-semibold leading-[1.02] sm:text-6xl lg:text-[3.5rem] xl:text-6xl">
+                {profile.name}
+              </h1>
+            </Reveal>
 
-        <Reveal delay={60}>
-          <p className="mt-6 max-w-2xl text-xl leading-relaxed text-muted sm:text-2xl">
-            Full stack developer building <span className="text-accent-text">practical web applications</span> - and
-            exploring how <span className="text-accent-text">generative AI</span> fits into real products.
-          </p>
-        </Reveal>
+            <Reveal delay={60}>
+              <p className="mt-6 max-w-2xl text-xl leading-relaxed text-muted sm:text-2xl">
+                Full stack developer building <span className="text-accent-text">practical web applications</span> - and
+                exploring how <span className="text-accent-text">generative AI</span> fits into real products.
+              </p>
+            </Reveal>
 
-        <Reveal delay={120}>
-          <ul className="mt-8 flex flex-wrap gap-2">
-            {heroStack.map((tech) => (
-              <li
-                key={tech}
-                className="rounded-full border border-line bg-surface px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent-text"
-              >
-                {tech}
-              </li>
-            ))}
-          </ul>
-        </Reveal>
+            <Reveal delay={120}>
+              <ul className="mt-8 flex flex-wrap gap-2">
+                {heroStack.map((tech) => (
+                  <li
+                    key={tech}
+                    className="rounded-full border border-line bg-surface px-3 py-1 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent-text"
+                  >
+                    {tech}
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
 
-        <Reveal delay={180}>
-          <div className="mt-10 flex flex-wrap items-center gap-3">
-            <a
-              href="#projects"
-              className="group/btn inline-flex items-center gap-2 rounded-md bg-accent px-5 py-3 text-sm font-medium text-on-accent shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:shadow-accent/20"
-            >
-              View projects{' '}
-              <ArrowDown className="text-[0.95rem] transition-transform duration-300 group-hover/btn:translate-y-0.5" />
-            </a>
-            <a
-              href="#contact"
-              className="inline-flex items-center gap-2 rounded-md border border-line-strong px-5 py-3 text-sm font-medium text-text transition-colors hover:border-accent hover:text-accent-text"
-            >
-              Get in touch
-            </a>
+            <Reveal delay={180}>
+              <div className="mt-10 flex flex-wrap items-center gap-3">
+                <a
+                  href="#projects"
+                  className="group/btn inline-flex items-center gap-2 rounded-md bg-accent px-5 py-3 text-sm font-medium text-on-accent shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:shadow-accent/20"
+                >
+                  View projects{' '}
+                  <ArrowDown className="text-[0.95rem] transition-transform duration-300 group-hover/btn:translate-y-0.5" />
+                </a>
+                <a
+                  href="#contact"
+                  className="inline-flex items-center gap-2 rounded-md border border-line-strong px-5 py-3 text-sm font-medium text-text transition-colors hover:border-accent hover:text-accent-text"
+                >
+                  Get in touch
+                </a>
 
-            <div className="mx-1 hidden h-6 w-px bg-line sm:block" aria-hidden="true" />
+                <div className="mx-1 hidden h-6 w-px bg-line sm:block" aria-hidden="true" />
 
-            <div className="flex items-center gap-1">
-              <a
-                href={profile.github}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="GitHub"
-                className="grid size-10 place-items-center rounded-md text-lg text-muted transition-colors hover:text-text"
-              >
-                <Github />
-              </a>
-              <a
-                href={profile.linkedin}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="LinkedIn"
-                className="grid size-10 place-items-center rounded-md text-lg text-muted transition-colors hover:text-text"
-              >
-                <Linkedin />
-              </a>
-              <a
-                href={`mailto:${profile.email}`}
-                aria-label="Email"
-                className="grid size-10 place-items-center rounded-md text-lg text-muted transition-colors hover:text-text"
-              >
-                <Mail />
-              </a>
-            </div>
+                <div className="flex items-center gap-1">
+                  <a
+                    href={profile.github}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="GitHub"
+                    className="grid size-10 place-items-center rounded-md text-lg text-muted transition-colors hover:text-text"
+                  >
+                    <Github />
+                  </a>
+                  <a
+                    href={profile.linkedin}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="LinkedIn"
+                    className="grid size-10 place-items-center rounded-md text-lg text-muted transition-colors hover:text-text"
+                  >
+                    <Linkedin />
+                  </a>
+                  <a
+                    href={`mailto:${profile.email}`}
+                    aria-label="Email"
+                    className="grid size-10 place-items-center rounded-md text-lg text-muted transition-colors hover:text-text"
+                  >
+                    <Mail />
+                  </a>
+                </div>
+              </div>
+            </Reveal>
           </div>
-        </Reveal>
+
+          {/* Stacked layouts lead with the artwork; from lg it sits alongside the copy. */}
+          <Reveal
+            direction="gate"
+            delay={140}
+            className="order-first w-fit justify-self-center lg:order-none lg:w-full"
+          >
+            <HeroGate />
+          </Reveal>
+        </div>
 
         <Reveal delay={240}>
           <dl className="mt-14 flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-line pt-6 font-mono text-sm text-faint">

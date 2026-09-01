@@ -178,6 +178,13 @@
     --reveal-x: 40px;
     --reveal-rotate: 1.2deg;
   }
+  /* The hero gate opens: no travel, but a much deeper scale and blur. */
+  .reveal-gate {
+    --reveal-y: 0px;
+    --reveal-scale: 0.8;
+    --reveal-blur: 16px;
+    --reveal-duration: 1.2s;
+  }
   /* Room for a longer travel once the layout is wide enough to absorb it. */
   @media (min-width: 640px) {
     .reveal-sweep-left {
@@ -207,6 +214,112 @@
 .dot-grid {
   background-image: radial-gradient(var(--line-strong) 1px, transparent 1px);
   background-size: 22px 22px;
+}
+
+/* ---------------------------------------------------------------------------
+   Hero gate. Layers, outermost in: a breathing halo, the dark void the art
+   sits in, a slow-turning dashed ring, a static rim, the masked artwork, then
+   two passes of light over the top.
+
+   The illustration ships on a solid black background, so it is masked to a
+   circle and dropped into that void — on the dark theme the two blacks meet
+   invisibly, and on the light theme the void reads as a deliberate portal
+   instead of a black square sitting on cream. Colours are the artwork's own
+   indigo and violet rather than the site accent, so it reads as a framed
+   illustration rather than a mis-tinted piece of UI.
+--------------------------------------------------------------------------- */
+.gate {
+  --gate-void: #0a0718;
+  --gate-line: rgb(129 140 248 / 0.45);
+  --gate-halo: rgb(99 102 241 / 0.5);
+
+  position: relative;
+  aspect-ratio: 1;
+}
+.dark .gate {
+  --gate-void: #04030a;
+  --gate-line: rgb(129 140 248 / 0.32);
+  --gate-halo: rgb(99 102 241 / 0.44);
+}
+
+/* Every layer is a concentric circle stacked in DOM order. */
+.gate > * {
+  position: absolute;
+  border-radius: 9999px;
+}
+
+/* Sits well outside the void so the halo reads as a ring of light around the
+   portal rather than being hidden behind it. */
+.gate-glow {
+  inset: -20%;
+  background: radial-gradient(
+    circle closest-side,
+    var(--gate-halo) 40%,
+    rgb(139 92 246 / 0.34) 70%,
+    transparent 96%
+  );
+  opacity: 0.55;
+  filter: blur(14px);
+}
+
+/* Opaque past the artwork's mask, so the mask never fades out onto the page
+   background — only ever onto the void. */
+.gate-void {
+  inset: -7%;
+  background: radial-gradient(
+    circle closest-side,
+    var(--gate-void) 0%,
+    var(--gate-void) 82%,
+    color-mix(in srgb, var(--gate-void) 45%, transparent) 92%,
+    transparent 100%
+  );
+}
+
+/* Turning dashed circle just outside the void, plus a static rim drawn over the
+   artwork so the portal keeps a clean edge on the light theme. */
+.gate-ring {
+  inset: -10%;
+  border: 1px dashed var(--gate-line);
+  opacity: 0.6;
+}
+.gate-rim {
+  inset: 1%;
+  border: 1px solid var(--gate-line);
+}
+
+/* 53% keeps the orb centred: the source frame is much wider than it is tall,
+   and the subject sits a little right of centre. The mask has a long, soft tail
+   so the outer wisps dissolve into the void instead of meeting a hard edge. */
+.gate-art {
+  inset: 1%;
+  height: 98%;
+  width: 98%;
+  object-fit: cover;
+  object-position: 53% 50%;
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 80%, rgb(0 0 0 / 0.4) 92%, transparent 100%);
+  mask-image: radial-gradient(circle closest-side, #000 80%, rgb(0 0 0 / 0.4) 92%, transparent 100%);
+}
+
+/* A light bar sweeping down the gate, and an aura ring pushing outward. Both
+   are additive light, so they brighten the artwork instead of greying it. */
+.gate-scan {
+  inset: 1%;
+  overflow: hidden;
+  mix-blend-mode: screen;
+}
+.gate-scan::before {
+  content: '';
+  position: absolute;
+  left: -5%;
+  right: -5%;
+  height: 20%;
+  opacity: 0;
+  background: linear-gradient(to bottom, transparent, rgb(147 197 253 / 0.5), rgb(219 234 254 / 0.7), transparent);
+}
+.gate-sheen {
+  inset: 7%;
+  border: 1px solid rgb(165 180 252 / 0.55);
+  opacity: 0;
 }
 
 /* ---------------------------------------------------------------------------
@@ -247,6 +360,81 @@
   .float-hint {
     animation: float-hint 2.4s ease-in-out infinite;
   }
+
+  /* Gate idle motion. Deliberately mismatched periods so the layers never
+     settle into a visible loop. */
+  .gate-glow {
+    animation: gate-breathe 6.5s ease-in-out infinite alternate;
+    will-change: transform, opacity;
+  }
+  .gate-ring {
+    animation: gate-spin 34s linear infinite;
+  }
+  .gate-art {
+    animation: gate-float 8.5s ease-in-out infinite alternate;
+  }
+  .gate-scan::before {
+    animation: gate-scan 9s ease-in-out infinite;
+  }
+  .gate-sheen {
+    animation: gate-pulse 7.5s ease-out infinite;
+  }
+
+  @keyframes gate-breathe {
+    from {
+      transform: scale(0.94);
+      opacity: 0.4;
+    }
+    to {
+      transform: scale(1.07);
+      opacity: 0.8;
+    }
+  }
+  @keyframes gate-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes gate-float {
+    from {
+      transform: translateY(-7px);
+    }
+    to {
+      transform: translateY(7px);
+    }
+  }
+  @keyframes gate-scan {
+    0% {
+      transform: translateY(-110%);
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    55% {
+      opacity: 1;
+    }
+    68%,
+    100% {
+      transform: translateY(510%);
+      opacity: 0;
+    }
+  }
+  @keyframes gate-pulse {
+    0% {
+      transform: scale(0.86);
+      opacity: 0;
+    }
+    14% {
+      opacity: 0.6;
+    }
+    72%,
+    100% {
+      transform: scale(1.3);
+      opacity: 0;
+    }
+  }
+
   @keyframes aura-drift {
     from {
       transform: translate3d(-6%, -4%, 0) scale(1);
