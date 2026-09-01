@@ -45,7 +45,11 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps) {
           <span className="grid size-8 place-items-center rounded-md border border-line-strong font-display text-sm font-semibold text-accent-text transition-colors group-hover:border-accent">
             PC
           </span>
-          <span className="font-display text-[0.95rem] font-semibold tracking-tight">{profile.name}</span>
+          {/* Six links plus the résumé button leave no room for the full name in
+              the md-to-lg band; the PC mark still links home. */}
+          <span className="font-display text-[0.95rem] font-semibold tracking-tight md:hidden lg:inline">
+            {profile.name}
+          </span>
         </a>
 
         <ul className="hidden items-center gap-1 md:flex">
