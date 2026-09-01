@@ -1,0 +1,261 @@
+@import 'tailwindcss';
+
+/* Enable class-based dark mode (toggled on <html>) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+   Design tokens. Warm-neutral base + a single warm vermilion accent.
+   Values live on :root / .dark so they switch at runtime; @theme maps them
+   to Tailwind utilities (bg-bg, text-muted, border-line, font-display, ...).
+--------------------------------------------------------------------------- */
+:root {
+  --bg: #faf9f7;
+  --bg-alt: #f2f0ec;
+  --surface: #ffffff;
+  --surface-hover: #faf9f7;
+
+  --text: #1c1917;
+  --muted: #57534e;
+  --faint: #7c766f;
+
+  --line: #e7e4e0;
+  --line-strong: #d6d2cd;
+
+  --accent: #d1502e;
+  --accent-text: #bd4426;
+  --accent-soft: #f7e6df;
+  --on-accent: #ffffff;
+}
+
+.dark {
+  --bg: #0c0a09;
+  --bg-alt: #15120f;
+  --surface: #1a1613;
+  --surface-hover: #221d19;
+
+  --text: #f5f2ef;
+  --muted: #a8a29e;
+  --faint: #8a827b;
+
+  --line: #2a2521;
+  --line-strong: #3a332e;
+
+  --accent: #f2764a;
+  --accent-text: #f78a63;
+  --accent-soft: #2a1a12;
+  --on-accent: #1a1613;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-alt: var(--bg-alt);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* offset anchor targets so the sticky nav doesn't cover section headings */
+    scroll-padding-top: 5.5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--on-accent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* Respect reduced-motion globally */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Reveal-on-scroll. The hidden state only applies when motion is allowed,
+   so reduced-motion users (and no-JS) always see fully-rendered content.
+   Directional variants let sections enter from a chosen edge.
+--------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+  .reveal-left {
+    transform: translateX(-24px);
+  }
+  .reveal-right {
+    transform: translateX(24px);
+  }
+  .reveal-scale {
+    transform: scale(0.96);
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Subtle dotted texture used sparingly behind the hero */
+.dot-grid {
+  background-image: radial-gradient(var(--line-strong) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* ---------------------------------------------------------------------------
+   Ambient motion — kept slow, low-contrast and reduced-motion aware so it
+   reads as "alive" rather than busy.
+--------------------------------------------------------------------------- */
+.hero-aura {
+  background: radial-gradient(closest-side, var(--accent) 0%, transparent 70%);
+  opacity: 0.14;
+  filter: blur(10px);
+}
+
+/* Animated underline that grows from the start edge on hover / when active */
+.link-underline {
+  position: relative;
+}
+.link-underline::after {
+  content: '';
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.15rem;
+  height: 1px;
+  background-color: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.link-underline:hover::after,
+.link-underline[data-active='true']::after {
+  transform: scaleX(1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-aura {
+    animation: aura-drift 16s ease-in-out infinite alternate;
+  }
+  .float-hint {
+    animation: float-hint 2.4s ease-in-out infinite;
+  }
+  @keyframes aura-drift {
+    from {
+      transform: translate3d(-6%, -4%, 0) scale(1);
+    }
+    to {
+      transform: translate3d(6%, 4%, 0) scale(1.12);
+    }
+  }
+  @keyframes float-hint {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(5px);
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Custom cursor. A small accent dot sits on the pointer while a larger ring
+   trails behind it (position lerped in JS). The ring swells over interactive
+   elements. Only mounted on fine pointers with motion allowed, so touch and
+   reduced-motion users keep the normal cursor untouched.
+--------------------------------------------------------------------------- */
+.cursor-ring,
+.cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  pointer-events: none;
+  border-radius: 9999px;
+  will-change: transform;
+}
+.cursor-ring {
+  height: 34px;
+  width: 34px;
+  margin: -17px 0 0 -17px;
+  border: 1.5px solid var(--accent);
+  opacity: 0.6;
+  transition:
+    width 0.22s ease,
+    height 0.22s ease,
+    margin 0.22s ease,
+    opacity 0.22s ease,
+    background-color 0.22s ease;
+}
+.cursor-dot {
+  height: 7px;
+  width: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  background-color: var(--accent);
+  transition: opacity 0.2s ease;
+}
+.cursor-ring.is-hovering {
+  height: 56px;
+  width: 56px;
+  margin: -28px 0 0 -28px;
+  opacity: 1;
+  background-color: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.cursor-dot.is-hovering {
+  opacity: 0;
+}
+.cursor-ring.is-pressed {
+  transform: scale(0.85) !important;
+}
