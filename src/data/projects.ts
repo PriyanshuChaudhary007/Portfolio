@@ -36,6 +36,7 @@ export const projects: Project[] = [
     ],
     tech: ['Next.js', 'React.js', 'TypeScript', 'Node.js', 'Firebase', 'Tailwind CSS', 'Google Gemini', 'Vapi API'],
     links: [
+      { label: 'Live demo', href: 'https://alphacare-two.vercel.app', type: 'demo' },
       { label: 'View repository', href: 'https://github.com/PriyanshuChaudhary007/alphacare', type: 'github' },
     ],
   },
